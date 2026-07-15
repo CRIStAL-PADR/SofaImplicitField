@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.22)
 project(SofaImplicitField VERSION 1.0)
 
+
+if(NOT TARGET Sofa.Framework)
+    find_package(Sofa.Framework REQUIRED) #For macros
+endif()
 sofa_find_package(Sofa.Component.Topology.Container.Constant REQUIRED)
 
 set(HEADER_FILES
