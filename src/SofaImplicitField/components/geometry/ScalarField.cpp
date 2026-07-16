@@ -27,7 +27,7 @@
 
 
 #include <sofa/core/ObjectFactory.h>
-#include <SofaImplicitField/geometry/ScalarField.h>
+#include <SofaImplicitField/components/geometry/ScalarField.h>
 
 namespace sofa
 {

@@ -23,7 +23,7 @@
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
 
-#include "BottleField.h"
+#include <SofaImplicitField/components/geometry/BottleField.h>
 
 namespace sofa::component::geometry::_BottleField_
 {

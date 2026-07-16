@@ -21,7 +21,7 @@
 ******************************************************************************/
 #pragma once
 
-#include <SofaImplicitField/mapping/ImplicitSurfaceMapping.h>
+#include <SofaImplicitField/components/mapping/ImplicitSurfaceMapping.h>
 #include <sofa/core/visual/VisualParams.h>
 #include <sofa/helper/rmath.h>
 #include <map>

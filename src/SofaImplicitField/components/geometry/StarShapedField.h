@@ -21,7 +21,7 @@
 ******************************************************************************/
 #pragma once
 
-#include "ScalarField.h"
+#include <SofaImplicitField/components/geometry/ScalarField.h>
 #include <sofa/type/Mat.h>
 
 namespace sofa::component::geometry

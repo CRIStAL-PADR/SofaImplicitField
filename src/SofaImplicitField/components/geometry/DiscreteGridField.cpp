@@ -24,7 +24,7 @@
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
 
-#include "DiscreteGridField.h"
+#include <SofaImplicitField/components/geometry/DiscreteGridField.h>
 
 
 namespace sofa::component::geometry::_discretegrid_

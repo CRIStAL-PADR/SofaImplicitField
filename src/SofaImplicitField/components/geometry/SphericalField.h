@@ -22,7 +22,7 @@
 #ifndef SOFA_IMPLICIT_SPHERICALFIELD_H
 #define SOFA_IMPLICIT_SPHERICALFIELD_H
 
-#include "ScalarField.h"
+#include <SofaImplicitField/components/geometry/ScalarField.h>
 
 namespace sofa
 {
