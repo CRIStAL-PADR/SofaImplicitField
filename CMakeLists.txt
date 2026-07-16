@@ -7,41 +7,43 @@ if(NOT TARGET Sofa.Framework)
 endif()
 sofa_find_package(Sofa.Component.Topology.Container.Constant REQUIRED)
 
+set(SOFAIMPLICITFIELD_SRC "src/${PROJECT_NAME}")
+
 set(HEADER_FILES
-    config.h.in
-    initSofaImplicitField.h
-    MarchingCube.h
+    ${SOFAIMPLICITFIELD_SRC}/config.h.in
+    ${SOFAIMPLICITFIELD_SRC}/initSofaImplicitField.h
+    ${SOFAIMPLICITFIELD_SRC}/MarchingCube.h
 
     # This is backward compatibility
-    deprecated/SphereSurface.h
-    deprecated/ImplicitSurfaceContainer.h    # This is a backward compatibility file toward ScalarField
-    deprecated/InterpolatedImplicitSurface.h # This is a backward compatibility file toward DiscreteGridField
+    ${SOFAIMPLICITFIELD_SRC}/deprecated/SphereSurface.h
+    ${SOFAIMPLICITFIELD_SRC}/deprecated/ImplicitSurfaceContainer.h    # This is a backward compatibility file toward ScalarField
+    ${SOFAIMPLICITFIELD_SRC}/deprecated/InterpolatedImplicitSurface.h # This is a backward compatibility file toward DiscreteGridField
 
-    components/engine/FieldToSurfaceMesh.h
-    components/geometry/BottleField.h
-    components/geometry/DiscreteGridField.h
-    components/geometry/SphericalField.h
-    components/geometry/ScalarField.h
-    components/geometry/StarShapedField.h
-    components/mapping/ImplicitSurfaceMapping.h
-    components/mapping/ImplicitSurfaceMapping.inl
+    ${SOFAIMPLICITFIELD_SRC}/components/engine/FieldToSurfaceMesh.h
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/BottleField.h
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/DiscreteGridField.h
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/SphericalField.h
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/ScalarField.h
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/StarShapedField.h
+    ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.h
+    ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.inl
 )
 
 set(SOURCE_FILES
-    initSofaImplicitField.cpp
-    MarchingCube.cpp
+    ${SOFAIMPLICITFIELD_SRC}/initSofaImplicitField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/MarchingCube.cpp
 
     ## This is a backward compatibility..
-    deprecated/SphereSurface.cpp
-    deprecated/InterpolatedImplicitSurface.cpp
-
-    components/engine/FieldToSurfaceMesh.cpp
-    components/geometry/BottleField.cpp
-    components/geometry/ScalarField.cpp
-    components/geometry/DiscreteGridField.cpp
-    components/geometry/SphericalField.cpp
-    components/geometry/StarShapedField.cpp
-    components/mapping/ImplicitSurfaceMapping.cpp
+    ${SOFAIMPLICITFIELD_SRC}/deprecated/SphereSurface.cpp
+    ${SOFAIMPLICITFIELD_SRC}/deprecated/InterpolatedImplicitSurface.cpp
+    
+    ${SOFAIMPLICITFIELD_SRC}/components/engine/FieldToSurfaceMesh.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/BottleField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/ScalarField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/DiscreteGridField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/SphericalField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/geometry/StarShapedField.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.cpp
 )
 
 set(EXTRA_FILES
@@ -65,5 +67,7 @@ sofa_create_package_with_targets(
     PACKAGE_NAME ${PROJECT_NAME}
     PACKAGE_VERSION ${PROJECT_VERSION}
     TARGETS ${PROJECT_NAME} AUTO_SET_TARGET_PROPERTIES
+    INCLUDE_SOURCE_DIR "src"
+    INCLUDE_INSTALL_DIR "${PROJECT_NAME}"
     RELOCATABLE "plugins"
     )

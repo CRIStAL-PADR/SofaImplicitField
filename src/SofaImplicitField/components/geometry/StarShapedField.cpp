@@ -23,7 +23,7 @@
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
 
-#include "StarShapedField.h"
+#include <SofaImplicitField/geometry/StarShapedField.h>
 
 namespace sofa::component::geometry::_StarShapedField_
 {
