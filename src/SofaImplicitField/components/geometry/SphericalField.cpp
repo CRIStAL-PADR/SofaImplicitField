@@ -23,7 +23,7 @@
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
 
-#include "SphericalField.h"
+#include <SofaImplicitField/components/geometry/SphericalField.h>
 
 namespace sofa::component::geometry::_sphericalfield_
 {

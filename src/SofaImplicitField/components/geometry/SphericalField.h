@@ -19,23 +19,65 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#define SOFA_COMPONENT_MAPPING_IMPLICITSURFACEMAPPING_CPP
-#include <SofaImplicitField/config.h>
-#include <sofa/core/ObjectFactory.h>
-#include "ImplicitSurfaceMapping.inl"
+#ifndef SOFA_IMPLICIT_SPHERICALFIELD_H
+#define SOFA_IMPLICIT_SPHERICALFIELD_H
 
-namespace sofaimplicitfield::mapping
+#include <SofaImplicitField/components/geometry/ScalarField.h>
+
+namespace sofa
 {
 
-using namespace sofa::defaulttype;
-
-// Register in the Factory
-void registerImplicitSurfaceMapping(sofa::core::ObjectFactory* factory)
+namespace component
 {
-    factory->registerObjects(sofa::core::ObjectRegistrationData("Compute an iso-surface from a set of particles.")
-    .add< ImplicitSurfaceMapping< Vec3dTypes, Vec3dTypes > >());
-}
 
-template class SOFA_SOFAIMPLICITFIELD_API ImplicitSurfaceMapping< Vec3dTypes, Vec3dTypes >;
+namespace geometry
+{
 
-}
+namespace _sphericalfield_
+{
+
+using sofa::type::Vec3d ;
+
+class  SOFA_SOFAIMPLICITFIELD_API SphericalField  : public ScalarField
+{
+public:
+    SOFA_CLASS(SphericalField, ScalarField);
+
+public:
+    SphericalField() ;
+    ~SphericalField() override { }
+
+    /// Inherited from BaseObject
+    void init() override ;
+    void reinit() override ;
+
+    /// Inherited from ScalarField.
+    double getValue(Vec3d& Pos, int &domain) override ;
+    Vec3d getGradient(Vec3d &Pos, int& domain) override ;
+    void getValueAndGradient(Vec3d& pos, double& val, Vec3d& grad, int& domain) override ;
+
+    using ScalarField::getValue ;
+    using ScalarField::getGradient ;
+    using ScalarField::getValueAndGradient ;
+
+    Data<bool> d_inside; ///< If true the field is oriented inside (resp. outside) the sphere. (default = false)
+    Data<double> d_radiusSphere; ///< Radius of Sphere emitting the field. (default = 1)
+    Data<Vec3d> d_centerSphere; ///< Position of the Sphere Surface. (default=0 0 0)
+
+protected:
+    Vec3d m_center;
+    double m_radius;
+    bool m_inside;
+};
+
+} /// _sphericalfield_
+
+using _sphericalfield_::SphericalField ;
+
+} /// geometry
+
+} /// component
+
+} /// sofa
+
+#endif

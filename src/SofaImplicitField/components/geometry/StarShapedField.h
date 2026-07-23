@@ -21,29 +21,29 @@
 ******************************************************************************/
 #pragma once
 
-#include "ScalarField.h"
+#include <SofaImplicitField/components/geometry/ScalarField.h>
 #include <sofa/type/Mat.h>
+
 namespace sofa::component::geometry
 {
 
-namespace _BottleField_
+namespace _StarShapedField_
 {
 
 using sofa::type::Vec3d;
 using sofa::type::Mat3x3;
 
 /**
- * This component emulates an implicit field shaped by a sphere with a hole made by an ellispsoid. The result may look like some kind of bottle or vase.
+ * This component emulates an implicit field that looks like some kind of star.
 */
-
-class  SOFA_SOFAIMPLICITFIELD_API BottleField  : public ScalarField
+class  SOFA_SOFAIMPLICITFIELD_API StarShapedField  : public ScalarField
 {
 public:
-    SOFA_CLASS(BottleField, ScalarField);
+    SOFA_CLASS(StarShapedField, ScalarField);
 
 public:
-    BottleField() ;
-    ~BottleField() override { }
+    StarShapedField() ;
+    ~StarShapedField() override { }
 
     /// Inherited from BaseObject
     void init() override ;
@@ -54,31 +54,26 @@ public:
     Vec3d getGradient(Vec3d &Pos, int& domain) override ;
     void getHessian(Vec3d &Pos, Mat3x3& h) override;
 
-    double outerLength(Vec3d& Pos);
-    double innerLength(Vec3d& Pos);
-
     using ScalarField::getValue ;
     using ScalarField::getGradient ;
     using ScalarField::getValueAndGradient ;
 
-    Data<bool> d_inside; ///< If true the field is oriented inside (resp. outside) the bottle-shaped object. (default = false)
+    Data<bool> d_inside; ///< If true the field is oriented inside (resp. outside) the sphere. (default = false)
     Data<double> d_radiusSphere; ///< Radius of Sphere emitting the field. (default = 1)
     Data<Vec3d> d_centerSphere; ///< Position of the Sphere Surface. (default=0 0 0)
-    Data<double> d_shift; ///< How much the top ellipsoid is shifted from the bottom sphere. (default=1)
-    Data<double> d_ellipsoidRadius; ///< Radius of the ellipsoid whose intersection with the sphere is taken off
-    Data<double> d_excentricity; ///< excentricity of ellipsoid
+    Data<double> d_branches; ///< Number of branches of the star. (default=1)
+    Data<double> d_branchesRadius; ///< Size of the branches of the star. (default=1)
 protected:
     Vec3d m_center;
     double m_radius;
     bool m_inside;
-    double m_shift;
-    double m_ellipsoidRadius;
-    double m_excentricity;
+    double m_branches;
+    double m_branchesRadius;
 };
 
-} //namespace _BottleField_
+} // namespace _StarShapedField_
 
-using sofa::component::geometry::_BottleField_::BottleField;
+using sofa::component::geometry::_StarShapedField_::StarShapedField;
 
-} //namespace sofa::component::geometry
+} // namespace sofa::component::geometry
 
