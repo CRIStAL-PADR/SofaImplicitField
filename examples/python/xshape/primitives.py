@@ -14,8 +14,22 @@ class Sphere(ScalarField):
         self.addData("radius", type="double",value=kwargs.get("radius", 1.0), default=1, help="radius of the sphere", group="Geometry")
 
     def getValue(self, pos):
+        """This version is of very low performance as there are a huge amount of call to the python side"""
         x,y,z = pos
         return numpy.linalg.norm(self.center.value - numpy.array([x,y,z])) - self.radius.value
+
+    def getValues(self, positions, out_values):
+           """This version of the overrides the getValues so that we fetch the data once"""
+           center = self.center.value
+           radius = self.radius.value
+           for i in range(len(positions)):
+               r = numpy.linalg.norm(center - positions[i]) - radius
+               out_values[i] = r
+
+    def getValues(self, positions, results):
+        """This version of the overrides the getValues so that we fetch the data once"""
+        results[:] = numpy.linalg.norm(positions - self.center.value, axis=1) - self.radius.value
+        return results
 
 class RoundedBox(ScalarField):
     def __init__(self, *args, **kwargs):
@@ -32,3 +46,12 @@ class RoundedBox(ScalarField):
         q = numpy.abs(self.center.value - numpy.array([x,y,z])) - b + r
         res = numpy.linalg.norm(numpy.maximum(q, 0.0)) + min(max(q[0], max(q[1],q[2]) ), 0.0) - r
         return res
+
+    def getValues(self, positions, results):
+        b = self.dimensions.value
+        r = self.rounding_radius.value
+        q = numpy.abs(positions - self.center.value) - b + r
+        outside = numpy.linalg.norm(numpy.maximum(q, 0.0), axis=1)
+        inside = numpy.minimum(numpy.max(q, axis=1), 0.0)
+        results[:] = outside + inside - r
+        return results
