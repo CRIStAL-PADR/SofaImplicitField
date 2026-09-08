@@ -92,7 +92,29 @@ private:
                              sofa::component::geometry::ScalarField*);
     void updateMeshIfNeeded();
 
-    bool hasChanged {true} ;
+    int lastGenerationCounter {-1};
+    int lastGenerationFieldCounter {-1};
+
+    class ComputingCapsule
+    {
+    public:
+        ScalarField::SPtr field;
+        double isoval;
+        double mstep;
+        double invStep;
+        Vec3d gridmin;
+        Vec3d gridmax;
+        int lastGenerationFieldCounter = -1;
+        int lastGenerationCounter = -1;
+    };
+    std::future<ComputingCapsule> result;
+
+    enum class Work {
+        Idle,
+        InProgress
+    };
+    std::atomic<Work> computingState;
+
     VecCoord tmpPoints;
     SeqTriangles tmpTriangles;
 
