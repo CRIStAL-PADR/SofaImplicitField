@@ -35,15 +35,16 @@ typedef sofa::core::topology::BaseMeshTopology::SeqTriangles SeqTriangles;
 typedef sofa::core::topology::BaseMeshTopology::Triangle Triangle;
 typedef sofa::type::vector<sofa::type::Vec3d> VecCoord;
 
+using sofa::core::objectmodel::BaseComponent;
 using sofa::component::geometry::ScalarField;
 using sofa::core::visual::VisualParams ;
 using BaseObject [[deprecated("Use sofa::core::objectmodel::BaseObject instead.")]] = sofa::core::objectmodel::BaseObject;
 using sofa::type::Vec3d ;
 
-class FieldToSurfaceMesh : public BaseObject
+class FieldToSurfaceMesh : public BaseComponent
 {
 public:
-    SOFA_CLASS(FieldToSurfaceMesh, BaseObject);
+    SOFA_CLASS(FieldToSurfaceMesh, BaseComponent);
 
     virtual void init() override ;
     virtual void draw(const VisualParams*params) override ;

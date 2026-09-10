@@ -66,6 +66,7 @@ void FieldToSurfaceMesh::init()
         d_componentState = core::objectmodel::ComponentState::Invalid;
     }
 
+    updateMeshIfNeeded();
     d_componentState = core::objectmodel::ComponentState::Valid;
 }
 
@@ -110,11 +111,7 @@ void FieldToSurfaceMesh::updateMeshIfNeeded()
 
     marchingCube.generateSurfaceMesh(isoval, mstep, invStep, gridmin, gridmax,
                                      [field](std::vector<Vec3d>& positions, std::vector<double>& res){
-                                        int i=0;
-                                        for(auto& position : positions)
-                                        {
-                                            res[i++]=field->getValue(position);
-                                        }
+                                        field->getValues(positions, res);
                                       },
                                      tmpPoints, tmpTriangles);
 

@@ -68,6 +68,16 @@ Vec3d ScalarField::getGradientByFinitDifference(Vec3d& pos, int& i)
     return Result;
 }
 
+void ScalarField::getValues(const std::vector<Vec3d>& positions, std::vector<double>& results)
+{
+    results.clear();
+    results.reserve(positions.size());
+    for(auto position : positions)
+    {
+        results.emplace_back(getValue(position));
+    }
+}
+
 Vec3d ScalarField::getGradient(Vec3d& pos, int& i)
 {
     return getGradientByFinitDifference(pos, i);
