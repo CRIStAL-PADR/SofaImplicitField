@@ -13,6 +13,7 @@ set(HEADER_FILES
     ${SOFAIMPLICITFIELD_SRC}/config.h.in
     ${SOFAIMPLICITFIELD_SRC}/initSofaImplicitField.h
     ${SOFAIMPLICITFIELD_SRC}/MarchingCube.h
+    ${SOFAIMPLICITFIELD_SRC}/MHD.h
 
     # This is backward compatibility
     ${SOFAIMPLICITFIELD_SRC}/deprecated/SphereSurface.h
@@ -32,6 +33,7 @@ set(HEADER_FILES
 set(SOURCE_FILES
     ${SOFAIMPLICITFIELD_SRC}/initSofaImplicitField.cpp
     ${SOFAIMPLICITFIELD_SRC}/MarchingCube.cpp
+    ${SOFAIMPLICITFIELD_SRC}/MHD.cpp
 
     ## This is a backward compatibility..
     ${SOFAIMPLICITFIELD_SRC}/deprecated/SphereSurface.cpp

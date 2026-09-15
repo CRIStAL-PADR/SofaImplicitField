@@ -19,28 +19,23 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#ifndef SOFAIMPLICITFIELD_COMPONENT_DISCRETEGRIDFIELD_H
-#define SOFAIMPLICITFIELD_COMPONENT_DISCRETEGRIDFIELD_H
+#pragma once
 #include <SofaImplicitField/config.h>
 
 #include <sofa/core/objectmodel/DataFileName.h>
 #include <SofaImplicitField/components/geometry/ScalarField.h>
 
-namespace sofa
+namespace sofa::component::geometry
 {
 
-namespace component
+namespace
 {
-
-namespace geometry
-{
-
-namespace _discretegrid_
-{
-
+using sofa::type::Vec3;
+using sofa::type::Vec3u;
 using sofa::type::Vec3d;
+}
 
-class  SOFA_SOFAIMPLICITFIELD_API DomainCache
+class SOFA_SOFAIMPLICITFIELD_API DomainCache
 {
 public:
     bool insideImg; // shows if the domain lies inside the valid image region or outside
@@ -72,28 +67,25 @@ public:
 
     sofa::core::objectmodel::DataFileName d_distanceMapHeader;
     Data< int > d_maxDomains; ///< Number of domains available for caching
-    Data< double > dx; ///< x translation
-    Data< double > dy; ///< y translation
-    Data< double > dz; ///< z translation
+
+    //Data< double > dx; ///< x translation
+    //Data< double > dy; ///< y translation
+    //Data< double > dz; ///< z translation
+
+    Data< Vec3 > d_position;
+
+    Vec3u m_imgSize;            // number of voxels
+    Vec3d m_spacing;            // physical distance between two neighboring voxels
+    Vec3d m_scale;              // (1/spacing)
+    Vec3d m_imgMin;
+    Vec3d m_imgMax;  // physical locations of the centers of both corner voxels
+    float *m_imgData;               // raw data
 
     int m_usedDomains;              // number of domains already given out
-    unsigned int m_imgSize[3];      // number of voxels
-    double m_spacing[3];            // physical distance between two neighboring voxels
-    double m_scale[3];              // (1/spacing)
-    double m_imgMin[3], m_imgMax[3];  // physical locations of the centers of both corner voxels
-    float *m_imgData;               // raw data
     unsigned int m_deltaOfs[8];     // offsets to define 8 corners of cube for interpolation
     std::vector<DomainCache> m_domainCache;
 };
 
-} /// namespace _discretegrid_
-using _discretegrid_::DiscreteGridField ;
+}
 
-} /// namespace geometry
-
-} /// namespace component
-
-} /// namespace sofa
-
-#endif
 

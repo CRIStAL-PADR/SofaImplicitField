@@ -19,62 +19,25 @@
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
 ******************************************************************************/
-#include <fstream>
 #include <SofaImplicitField/config.h>
+#include <SofaImplicitField/components/geometry/DiscreteGridField.h>
+#include <SofaImplicitField/MHD.h>
+
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
 
-#include <SofaImplicitField/components/geometry/DiscreteGridField.h>
-
-
-namespace sofa::component::geometry::_discretegrid_
+namespace sofa::component::geometry
 {
-
-/**
-DiscreteGridField::DiscreteGridField()
-    : in_filename(initData(&in_filename,"filename","filename"))
-    , in_nx(initData(&in_nx,0,"nx","in_nx"))
-    , in_ny(initData(&in_ny,0,"ny","in_ny"))
-    , in_nz(initData(&in_nz,0,"nz","in_nz"))
-    , in_scale(initData(&in_scale,0.0,"scale","in_scale"))
-    , in_sampling(initData(&in_sampling,0.0,"sampling","in_sampling"))
-{
-}
-
-
-
-void DiscreteGridField::init()
-{
-    if(in_nx.getValue()==0 && in_nz.getValue()==0 && in_nz.getValue()==0) {
-        d_componentState.setValue(ComponentState::Invalid);
-        msg_error() << "uninitialized grid";
-    }
-    else if(in_filename.isSet() == false) {
-        d_componentState.setValue(ComponentState::Invalid)
-        msg_error() << "unset filename";
-    }
-    else {
-        pmin.set(0,0,-5.0);
-        pmax.set(27,27,5.0);
-        loadGrid(in_scale.getValue(),in_sampling.getValue(),in_nx.getValue(),in_ny.getValue(),in_nz.getValue(),pmin,pmax);
-    }
-
-    d_componentState.setValue(ComponentState::Valid)
-}
-*/
 
 DiscreteGridField::DiscreteGridField()
     : ScalarField(),
       d_distanceMapHeader( initData( &d_distanceMapHeader, "file", "MHD file for the distance map" ) ),
       d_maxDomains( initData( &d_maxDomains, 1, "maxDomains", "Number of domains available for caching" ) ),
-      dx( initData( &dx, 0.0, "dx", "x translation" ) ),
-      dy( initData( &dy, 0.0, "dy", "y translation" ) ),
-      dz( initData( &dz, 0.0, "dz", "z translation" ) )
+      d_position(initData( &d_position, {0.0,0.0,0.0}, "position", "The position in world space of the grid" ) )
 {
     m_usedDomains = 0;
     m_imgData = nullptr;
 }
-
 
 DiscreteGridField::~DiscreteGridField()
 {
@@ -85,13 +48,11 @@ DiscreteGridField::~DiscreteGridField()
     }
 }
 
-
 ///used to set a name in tests
 void DiscreteGridField::setFilename(const std::string& name)
 {
     d_distanceMapHeader.setValue(name);
 }
-
 
 void DiscreteGridField::init()
 {
@@ -100,110 +61,12 @@ void DiscreteGridField::init()
     if (ok) printf( "Successfully loaded distance map.\n" );
 }
 
-
 bool DiscreteGridField::loadGridFromMHD( const char *filename )
 {
-    m_imgMin[0]=m_imgMin[1]=m_imgMin[2] = 0;
-    m_spacing[0]=m_spacing[1]=m_spacing[2] = 1;
-    m_imgSize[0]=m_imgSize[1]=m_imgSize[2] = 0;
+    bool loadSucceeded = sofaimplicitfield::loader::loadGridFromMHD(filename, m_imgMin, m_spacing, m_imgSize, m_imgData);
 
-    char buffer[1024];
-    char *value;
-    bool dataFileSpecified = false;
-    float f0, f1, f2;
-    int i0, i1, i2;
-    char dataFile[1024];
-
-    // read header file
-    std::ifstream header( filename );
-    if (!header.is_open()) return false;
-    while (!header.eof())
-    {
-        header.getline( buffer, 1024 );
-        if (strncmp( buffer, "ObjectType", 10 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (strncmp( value, "Image", 5 ) != 0)
-            {
-                printf( "ERROR: Object is no image.\n" );
-                return false;
-            }
-        }
-        else if (strncmp( buffer, "NDims", 5 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (*value != '3')
-            {
-                printf( "ERROR: Wrong number of dimensions.\n" );
-                return false;
-            }
-        }
-        else if (strncmp( buffer, "BinaryData ", 11 ) == 0 || strncmp( buffer, "BinaryData=", 11 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (strncmp( value, "True", 4 ) != 0)
-            {
-                printf( "ERROR: Data is not binary.\n" );
-                return false;
-            }
-        }
-        else if (strncmp( buffer, "CompressedData", 14 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (strncmp( value, "False", 5 ) != 0)
-            {
-                printf( "ERROR: Data is compressed.\n" );
-                return false;
-            }
-        }
-        else if (strncmp( buffer, "TransformMatrix", 15 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (strncmp( value, "1 0 0 0 1 0 0 0 1", 17 ) != 0)
-            {
-                printf( "ERROR: Unsupported transform matrix.\n" );
-                return false;
-            }
-        }
-        else if (strncmp( buffer, "Offset", 6 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            sscanf( value, "%f %f %f", &f0, &f1, &f2 );
-            m_imgMin[0]=f0;  m_imgMin[1]=f1;  m_imgMin[2]=f2;
-            printf( "Image offset = %f %f %f\n", m_imgMin[0], m_imgMin[1], m_imgMin[2] );
-        }
-        else if (strncmp( buffer, "ElementSpacing", 14 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            sscanf( value, "%f %f %f", &f0, &f1, &f2 );
-            m_spacing[0]=f0;  m_spacing[1]=f1;  m_spacing[2]=f2;
-            printf( "Image spacing = %f %f %f\n", m_spacing[0], m_spacing[1], m_spacing[2] );
-        }
-        else if (strncmp( buffer, "DimSize", 7 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            sscanf( value, "%d %d %d", &i0, &i1, &i2 );
-            m_imgSize[0]=i0;  m_imgSize[1]=i1;  m_imgSize[2]=i2;
-            printf( "Image size = %i %i %i\n", m_imgSize[0], m_imgSize[1], m_imgSize[2] );
-        }
-        else if (strncmp( buffer, "ElementType", 11 ) == 0)
-        {
-            value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-            if (strncmp( value, "MET_FLOAT", 9) != 0)
-            {
-                printf( "ERROR: Datatype is not supported.\n" );
-                return false;
-            }
-        }
-        /* Don't allow variable names for problems with correct file paths!
-        else if (strncmp( buffer, "ElementDataFile", 11 ) == 0) {
-          value = strchr( buffer, '=' )+1;  while (*value==' ') value++;
-          strncpy( dataFile, value, sizeof(dataFile) - 1 );
-          dataFile[sizeof(dataFile) - 1] = '\0';
-          dataFileSpecified = true;
-        }*/
-    }
-    header.close();
+    if(!loadSucceeded)
+        return false;
 
     // init remaining variables
     for (int d=0; d<3; d++)
@@ -221,43 +84,20 @@ bool DiscreteGridField::loadGridFromMHD( const char *filename )
     m_deltaOfs[6] = m_deltaOfs[2] + sliceSize;
     m_deltaOfs[7] = m_deltaOfs[3] + sliceSize;
 
-    // read data file
-    if (!dataFileSpecified)
-    {
-        // change extension to .raw
-        strncpy( dataFile, filename, sizeof(dataFile) - 1 );
-        dataFile[sizeof(dataFile) - 1] = '\0';
-        size_t lenWithoutExt = strlen( filename );
-        if (lenWithoutExt >= 3)
-            lenWithoutExt -= 3;
-        if (lenWithoutExt < sizeof(dataFile) - 4)
-        {
-            dataFile[lenWithoutExt] = '\0';
-            strncat( dataFile, "raw", sizeof(dataFile) - lenWithoutExt - 1 );
-        }
-        else
-        {
-            printf( "Warning: filename too long to replace extension, keeping '%s'\n", dataFile );
-        }
-    }
-    std::ifstream data( dataFile, std::ios_base::binary|std::ios_base::in );
-    if (!data.is_open()) return false;
-    unsigned int numVoxels = m_imgSize[0]*m_imgSize[1]*m_imgSize[2];
-    m_imgData = new float[numVoxels];
-    data.read( (char*)m_imgData, numVoxels*sizeof(float) );
-    if (data.bad()) return false;
-    data.close();
     return true;
 }
 
 void DiscreteGridField::updateCache( DomainCache *cache, Vec3d& pos )
 {
     cache->insideImg = true;
-    for (int d=0; d<3; d++) if (pos[d]<m_imgMin[d] || pos[d]>=m_imgMax[d])
+    for (int d=0; d<3; d++)
+    {
+        if (pos[d]<m_imgMin[d] || pos[d]>=m_imgMax[d])
         {
             cache->insideImg = false;
             break;
         }
+    }
     if (cache->insideImg)
     {
         int voxMinPos[3];
@@ -303,7 +143,6 @@ void DiscreteGridField::updateCache( DomainCache *cache, Vec3d& pos )
     }
 }
 
-
 int DiscreteGridField::getNextDomain()
 {
     // while we have free domains always return the next one, afterwards always use the last one
@@ -311,14 +150,11 @@ int DiscreteGridField::getNextDomain()
     return m_usedDomains-1;
 }
 
-
 double DiscreteGridField::getValue( Vec3d &transformedPos, int &domain )
 {
     // use translation
-    Vec3d pos;
-    pos[0] = transformedPos[0] - dx.getValue();
-    pos[1] = transformedPos[1] - dy.getValue();
-    pos[2] = transformedPos[2] - dz.getValue();
+    Vec3d pos = d_position.getValue();
+
     // find cache domain and check if it needs an update
     DomainCache *cache;
     if (domain < 0)
@@ -359,7 +195,6 @@ double DiscreteGridField::getValue( Vec3d &transformedPos, int &domain )
     return res;
 }
 
-
 double DiscreteGridField::getValue( Vec3d &transformedPos )
 {
     static int domain=-1;
@@ -373,4 +208,4 @@ void registerDiscreteGridField(sofa::core::ObjectFactory* factory)
     .add< DiscreteGridField >());
 }
 
-} ///namespace sofa::component::geometry::_discretegrid_
+}

@@ -46,7 +46,7 @@ namespace sofa::component::container
 {
     extern void registerInterpolatedImplicitSurface(sofa::core::ObjectFactory* factory);
 }
-namespace sofa::component::geometry::_discretegrid_
+namespace sofa::component::geometry
 {
     extern void registerDiscreteGridField(sofa::core::ObjectFactory* factory);
 }
@@ -108,7 +108,7 @@ void registerObjects(sofa::core::ObjectFactory* factory)
     sofa::component::geometry::_StarShapedField_::registerStarShapedField(factory);
     sofaimplicitfield::mapping::registerImplicitSurfaceMapping(factory);
     sofa::component::container::registerInterpolatedImplicitSurface(factory);
-    sofa::component::geometry::_discretegrid_::registerDiscreteGridField(factory);
+    sofa::component::geometry::registerDiscreteGridField(factory);
     sofaimplicitfield::component::engine::registerFieldToSurfaceMesh(factory);
 }
 
