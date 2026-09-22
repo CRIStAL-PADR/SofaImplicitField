@@ -21,10 +21,16 @@
 ******************************************************************************/
 #include <SofaImplicitField/config.h>
 #include <SofaImplicitField/components/geometry/DiscreteGridField.h>
+#include <sofa/core/visual/VisualParams.h>
 #include <SofaImplicitField/MHD.h>
+
+#include <bits/stdc++.h>
+#include <algorithm>
 
 #include <sofa/core/ObjectFactory.h>
 using sofa::core::RegisterObject ;
+
+#include <cmath>
 
 namespace sofa::component::geometry
 {
@@ -32,173 +38,326 @@ namespace sofa::component::geometry
 DiscreteGridField::DiscreteGridField()
     : ScalarField(),
       d_distanceMapHeader( initData( &d_distanceMapHeader, "file", "MHD file for the distance map" ) ),
-      d_maxDomains( initData( &d_maxDomains, 1, "maxDomains", "Number of domains available for caching" ) ),
-      d_position(initData( &d_position, {0.0,0.0,0.0}, "position", "The position in world space of the grid" ) )
+      d_min(initData( &d_min, {-0.5,-0.5,-0.5}, "min", "The min positions in world space" ) ),
+      d_max(initData( &d_max, {0.5 ,0.5 ,0.5}, "max", "The max positions in world space" ) ),
+      d_resolution(initData( &d_resolution, {10,10,10}, "resolution", "The resolution of each axis of the grid" ) ),
+      d_buffer(initData(&d_buffer, "buffer", "The data buffer olding the values")),
+      d_debugDraw(initData(&d_debugDraw, false, "debugDraw", "show the values on the grid"))
 {
-    m_usedDomains = 0;
-    m_imgData = nullptr;
+    addUpdateCallback("updateFromRMM",{&d_resolution, &d_min, &d_max},[this](const sofa::core::DataTracker&){
+
+        /// Update the internal buffers when d_resolution change
+        std::cout << "WE ARE GOING TO UPDATE FROM DATA " << d_resolution.getCounter() << std::endl;
+
+        auto buffer = sofa::helper::getWriteOnlyAccessor(d_buffer);
+        buffer->resize(d_min.getValue(), d_max.getValue(), d_resolution.getValue());
+        internalUpdate(buffer);
+        refreshTrackers();
+
+        return sofa::core::objectmodel::ComponentState::Valid;
+    }, {});
+
+    addUpdateCallback("updateFromData",{&d_buffer},[this](const sofa::core::DataTracker&){
+
+        /// Update the internal buffers when d_resolution change
+        std::cout << "WE ARE GOING TO UPDATE FROM DATA BUFFER: " << d_buffer.getCounter() << std::endl;
+
+        /// Update the internal state
+        auto buffer = sofa::helper::getReadAccessor(d_buffer);
+        internalUpdate(buffer);
+
+        /// Propagate the change to the other inputs.
+        d_resolution.setValue(buffer->resolution);
+        d_min.setValue(buffer->min);
+        d_max.setValue(buffer->max);
+
+        refreshTrackers();
+
+        return sofa::core::objectmodel::ComponentState::Valid;
+    }, {});
 }
 
 DiscreteGridField::~DiscreteGridField()
 {
-    if (m_imgData)
-    {
-        delete[] m_imgData;
-        m_imgData = nullptr;
-    }
 }
 
-///used to set a name in tests
-void DiscreteGridField::setFilename(const std::string& name)
+// Clean the tracker so we don't call the update mechanisme twice
+void DiscreteGridField::refreshTrackers()
 {
-    d_distanceMapHeader.setValue(name);
+    for(auto& tracker : m_internalEngine){
+        tracker.second.cleanDirty();
+    }
 }
 
 void DiscreteGridField::init()
 {
-    m_domainCache.resize( d_maxDomains.getValue() );
-    bool ok = loadGridFromMHD( d_distanceMapHeader.getFullPath().c_str() );
-    if (ok) printf( "Successfully loaded distance map.\n" );
+    if(d_distanceMapHeader.isSet())
+    {
+        bool ok = loadGridFromMHD( d_distanceMapHeader.getFullPath().c_str() );
+        if (ok){
+            msg_info() << "Successfully loaded a distance map from file.";
+            d_componentState = sofa::core::objectmodel::ComponentState::Valid;
+        }
+        else{
+            d_componentState = sofa::core::objectmodel::ComponentState::Invalid;
+        }
+        return;
+    }
+    std::cout << getPathName() << " init" << std::endl;
+
+    if(!d_buffer.isSet()){
+        internalResize(d_resolution.getValue(), d_min.getValue(), d_max.getValue());
+    }else{
+        const auto& buffer = sofa::helper::getReadAccessor(d_buffer);
+        std::cout << getPathName() << "   buffer " << buffer->min << ", " << buffer->max << " and " << buffer->data << std::endl;
+        internalUpdate(buffer);
+    }
+
+    std::cout << getPathName() << " init done" << std::endl;
+    d_componentState = sofa::core::objectmodel::ComponentState::Valid;
 }
 
 bool DiscreteGridField::loadGridFromMHD( const char *filename )
 {
-    bool loadSucceeded = sofaimplicitfield::loader::loadGridFromMHD(filename, m_imgMin, m_spacing, m_imgSize, m_imgData);
+    auto buffer = sofa::helper::getWriteOnlyAccessor(d_buffer);
+
+    bool loadSucceeded = sofaimplicitfield::loader::loadGridFromMHD(filename,
+                                                                    buffer->min, buffer->spacing,
+                                                                    buffer->resolution, buffer->data);
 
     if(!loadSucceeded)
         return false;
 
     // init remaining variables
-    for (int d=0; d<3; d++)
-    {
-        m_scale[d] = 1.0/m_spacing[d];
-        m_imgMax[d] = m_imgMin[d] + (double)(m_imgSize[d]-1)*m_spacing[d];
-    }
-    m_deltaOfs[0] = 0;
-    m_deltaOfs[1] = 1;
-    m_deltaOfs[2] = m_imgSize[0];
-    m_deltaOfs[3] = m_imgSize[0]+1;
-    unsigned int sliceSize = m_imgSize[0]*m_imgSize[1];
-    m_deltaOfs[4] = m_deltaOfs[0] + sliceSize;
-    m_deltaOfs[5] = m_deltaOfs[1] + sliceSize;
-    m_deltaOfs[6] = m_deltaOfs[2] + sliceSize;
-    m_deltaOfs[7] = m_deltaOfs[3] + sliceSize;
+    // for (int d=0; d<3; d++)
+    // {
+    //     scaling[d] = 1.0/spacing[d];
+    //     max[d] = min[d] + (double)(resolution[d]-1)*spacing[d];
+    // }
+    // m_deltaOfs[0] = 0;
+    // m_deltaOfs[1] = 1;
+    // m_deltaOfs[2] = resolution[0];
+    // m_deltaOfs[3] = resolution[0]+1;
+
+    // unsigned int sliceSize = resolution[0]*resolution[1];
+    // m_deltaOfs[4] = m_deltaOfs[0] + sliceSize;
+    // m_deltaOfs[5] = m_deltaOfs[1] + sliceSize;
+    // m_deltaOfs[6] = m_deltaOfs[2] + sliceSize;
+    // m_deltaOfs[7] = m_deltaOfs[3] + sliceSize;
 
     return true;
 }
 
-void DiscreteGridField::updateCache( DomainCache *cache, Vec3d& pos )
+void MemoryBuffer::resize(const Vec3d& min_, const Vec3d& max_, const Vec3u& resolution_)
 {
-    cache->insideImg = true;
-    for (int d=0; d<3; d++)
-    {
-        if (pos[d]<m_imgMin[d] || pos[d]>=m_imgMax[d])
+    resolution = resolution_;
+    min = min_;
+    max = max_;
+
+    auto newImgSize = resolution.x() * resolution.y() * resolution.z();
+    if(size != newImgSize){
+        std::cout << "Resizeing memory buffer " << data << " to " << newImgSize << std::endl;
+        if (data)
         {
-            cache->insideImg = false;
-            break;
+            delete[] data;
         }
+        data = new float[newImgSize];
+        size = newImgSize;
     }
-    if (cache->insideImg)
+    std::cout << "Resizeing done... " << data << std::endl;
+
+    spacing = (max - min).linearDivision(Vec3d{
+        static_cast<double>(resolution[0] - 1 > 0 ? resolution[0] - 1 : 1),
+        static_cast<double>(resolution[1] - 1 > 0 ? resolution[1] - 1 : 1),
+        static_cast<double>(resolution[2] - 1 > 0 ? resolution[2] - 1 : 1)
+    });
+
+    scaling = Vec3d{1.0,1.0,1.0}.linearDivision(spacing);
+}
+
+void DiscreteGridField::internalUpdate(const MemoryBuffer& buffer)
+{
+    const auto& resolution = buffer.resolution;
+
+    unsigned int sliceSize = resolution[0] * resolution[1];
+    m_deltaOfs[0] = 0;
+    m_deltaOfs[1] = 1;
+    m_deltaOfs[2] = resolution[0];
+    m_deltaOfs[3] = resolution[0] + 1;
+    m_deltaOfs[4] = sliceSize;
+    m_deltaOfs[5] = sliceSize + 1;
+    m_deltaOfs[6] = sliceSize + resolution[0];
+    m_deltaOfs[7] = sliceSize + resolution[0] + 1;
+
+    d_resolution.setValue(resolution);
+    d_min.setValue(buffer.min);
+    d_max.setValue(buffer.max);
+}
+
+void DiscreteGridField::internalResize(const Vec3u& resolution, const Vec3d& min, const Vec3d& max)
+{
+    auto buffer = sofa::helper::getWriteOnlyAccessor(d_buffer);
+    buffer->resize(min,max,resolution);
+    internalUpdate(buffer);
+}
+
+bool DiscreteGridField::empty()
+{
+    auto buffer = sofa::helper::getReadAccessor(d_buffer);
+    return buffer->data == nullptr;
+}
+
+void DiscreteGridField::draw(const sofa::core::visual::VisualParams* params)
+{
+    if(!d_debugDraw.getValue())
+        return;
+
+    auto dt = params->drawTool();
+    const auto& buffer = d_buffer.getValue();
+    auto& resolution = buffer.resolution;
+    auto& min = buffer.min;
+    auto& data = buffer.data;
+    auto& spacing = buffer.spacing;
+
+    auto index = [resolution](unsigned int x, unsigned int y, unsigned int z) { return x + resolution.x() * y + (resolution.x() * resolution.y() * z); };
+
+    for(unsigned int x=0;x<resolution.x();++x)
     {
-        int voxMinPos[3];
-        for (int d=0; d<3; d++)
+        for(unsigned int y=0;y<resolution.y();++y)
         {
-            voxMinPos[d] = (int)(m_scale[d] * (pos[d]-m_imgMin[d]));
-            cache->bbMin[d] = m_spacing[d]*(double)voxMinPos[d] + m_imgMin[d];
-            cache->bbMax[d] = cache->bbMin[d] + m_spacing[d];
-        }
-        unsigned int ofs = voxMinPos[0] + m_imgSize[0]*(voxMinPos[1] + m_imgSize[1]*voxMinPos[2]);
-        cache->val[0] = m_imgData[ofs];
-        for (int i=1; i<8; i++) cache->val[i] = m_imgData[ofs+m_deltaOfs[i]];
-    }
-    else
-    {
-        // init bounding box to be as large as possible to prevent unnecessary cache updates while outside image
-        const double MIN=-10e6, MAX=10e6;
-        int voxMappedPos[3];
-        for (int d=0; d<3; d++)
-        {
-            if (pos[d] < m_imgMin[d])
+            for(unsigned int z=0;z<resolution.z();++z)
             {
-                cache->bbMin[d] = MIN;
-                cache->bbMax[d] = m_imgMin[d];
-                voxMappedPos[d] = 0;
-            }
-            else if (pos[d] >= m_imgMax[d])
-            {
-                cache->bbMin[d] = m_imgMax[d];
-                cache->bbMax[d] = MAX;
-                voxMappedPos[d] = m_imgSize[d]-1;
-            }
-            else
-            {
-                cache->bbMin[d] = MIN;
-                cache->bbMax[d] = MAX;
-                voxMappedPos[d] = (int)(m_scale[d] * (pos[d]-m_imgMin[d]));
+                Vec3d pos {x,y,z};
+                pos = min+(pos.linearProduct(spacing));
+                int i =0;
+                double r = getValue(pos,i);
+                std::stringstream s;
+                s << std::setprecision(1) << data[index(x,y,z)]  << " vs " << r << "(" << x << "," << y << "," << z << ")";
+                dt->draw3DText(pos, 0.1, type::RGBAColor::cyan(), s.str().c_str());
             }
         }
-        unsigned int ofs = voxMappedPos[0] + m_imgSize[0]*(voxMappedPos[1] + m_imgSize[1]*voxMappedPos[2]);
-        // if cache lies outside image, the returned distance is not updated anymore, instead this boundary value is returned
-        cache->val[0] = m_imgData[ofs] + m_spacing[0]+m_spacing[1]+m_spacing[2];
     }
 }
 
-int DiscreteGridField::getNextDomain()
+void DiscreteGridField::getValues(const std::vector<Vec3d>& positions, std::vector<double>& results)
 {
-    // while we have free domains always return the next one, afterwards always use the last one
-    if (m_usedDomains < (int)m_domainCache.size()) m_usedDomains++;
-    return m_usedDomains-1;
+    auto buffer = sofa::helper::getReadAccessor(d_buffer);
+    if(buffer->data==nullptr)
+        return;
+
+    const auto& resolution = buffer->resolution;
+    const auto& min = buffer->min;
+    const auto& scaling = buffer->scaling;
+    const auto& spacing = buffer->spacing;
+    const auto& data = buffer->data;
+
+    auto getValue = [&min, &scaling, &resolution, &data](const Vec3d position){
+        Vec3d localPosition = (position-min);
+
+        Vec3d t = localPosition.linearProduct(scaling);
+
+        // Compute the indices of voxels surrounding the position
+        unsigned int x0 = std::min((unsigned int)std::floor(t.x()), resolution.x() - 2 );
+        unsigned int y0 = std::min((unsigned int)std::floor(t.y()), resolution.y() - 2 );
+        unsigned int z0 = std::min((unsigned int)std::floor(t.z()), resolution.z() - 2 );
+
+        unsigned int x1 = x0 + 1;
+        unsigned int y1 = y0 + 1;
+        unsigned int z1 = z0 + 1;
+
+        t = t-Vec3d{x0,y0,z0};
+
+        // Helper function to access the index
+        auto index = [resolution](unsigned int x, unsigned int y, unsigned int z) { return x + resolution.x() * y + (resolution.x() * resolution.y() * z); };
+
+        // Get the height raw values surrounding the position
+        const double c000 = data[index(x0, y0, z0)];
+        const double c100 = data[index(x1, y0, z0)];
+        const double c010 = data[index(x0, y1, z0)];
+        const double c110 = data[index(x1, y1, z0)];
+        const double c001 = data[index(x0, y0, z1)];
+        const double c101 = data[index(x1, y0, z1)];
+        const double c011 = data[index(x0, y1, z1)];
+        const double c111 = data[index(x1, y1, z1)];
+
+        // X
+        const double c00 = c000 * (1.0 - t.x()) + c100 * t.x();
+        const double c10 = c010 * (1.0 - t.x()) + c110 * t.x();
+        const double c01 = c001 * (1.0 - t.x()) + c101 * t.x();
+        const double c11 = c011 * (1.0 - t.x()) + c111 * t.x();
+
+        // Y
+        const double c0 = c00 * (1.0 - t.y()) + c10 * t.y();
+        const double c1 = c01 * (1.0 - t.y()) + c11 * t.y();
+
+        // Z
+        const double value = c0 * (1.0 - t.z()) + c1 * t.z();
+
+        return value;
+    };
+
+    for(unsigned int i=0;i<positions.size();++i){
+        results[i] = getValue(positions[i]);
+    }
+
 }
 
-double DiscreteGridField::getValue( Vec3d &transformedPos, int &domain )
+double DiscreteGridField::getValue(Vec3d &position, int &)
 {
-    // use translation
-    Vec3d pos = d_position.getValue();
+    auto buffer = sofa::helper::getReadAccessor(d_buffer);
+    if(buffer->data==nullptr)
+        return -1.0;
 
-    // find cache domain and check if it needs an update
-    DomainCache *cache;
-    if (domain < 0)
-    {
-        domain = getNextDomain();
-        cache = &(m_domainCache[domain]);
-        updateCache( cache, pos );
-    }
-    else
-    {
-        cache = &(m_domainCache[domain]);
-        for (int d=0; d<3; d++)
-        {
-            if (pos[d]<cache->bbMin[d] || pos[d]>cache->bbMax[d])
-            {
-                updateCache( cache, pos );
-                break;
-            }
-        }
-    }
+    const auto& resolution = buffer->resolution;
+    const auto& min = buffer->min;
+    const auto& scaling = buffer->scaling;
+    const auto& spacing = buffer->spacing;
+    const auto& data = buffer->data;
 
-    // if cache lies outside image, the returned distance is not updated anymore, instead this boundary value is returned
-    if (!cache->insideImg) return cache->val[0];
+    Vec3d localPosition = (position-min);
 
-    // use trilinear interpolation on cached cube
-    double weight[3];
-    for (int d=0; d<3; d++)
-    {
-        weight[d] = m_scale[d] * (pos[d]-cache->bbMin[d]);
-    }
-    double d = weight[0]*weight[1];
-    double c = weight[1] - d;
-    double b = weight[0] - d;
-    double a = (1.0-weight[1]) - b;
-    double res = ( cache->val[0]*a + cache->val[1]*b + cache->val[2]*c + cache->val[3]*d ) * (1.0-weight[2])
-            + ( cache->val[4]*a + cache->val[5]*b + cache->val[6]*c + cache->val[7]*d ) * weight[2];
+    // use trilinear interpolation to get the value at any location
+    Vec3d t = localPosition.linearProduct(scaling);
 
-    return res;
-}
+    // Compute the indices of voxels surrounding the position
+    unsigned int x0 = std::min((unsigned int)std::floor(t.x()), resolution.x() - 2 );
+    unsigned int y0 = std::min((unsigned int)std::floor(t.y()), resolution.y() - 2 );
+    unsigned int z0 = std::min((unsigned int)std::floor(t.z()), resolution.z() - 2 );
 
-double DiscreteGridField::getValue( Vec3d &transformedPos )
-{
-    static int domain=-1;
-    return getValue( transformedPos, domain );
+    unsigned int x1 = x0 + 1;
+    unsigned int y1 = y0 + 1;
+    unsigned int z1 = z0 + 1;
+
+    t = t-Vec3d{x0,y0,z0};
+
+    // Helper function to access the index
+    auto index = [resolution](unsigned int x, unsigned int y, unsigned int z) { return x + resolution.x() * y + (resolution.x() * resolution.y() * z); };
+
+    // Get the height raw values surrounding the position
+    const double c000 = data[index(x0, y0, z0)];
+    const double c100 = data[index(x1, y0, z0)];
+    const double c010 = data[index(x0, y1, z0)];
+    const double c110 = data[index(x1, y1, z0)];
+    const double c001 = data[index(x0, y0, z1)];
+    const double c101 = data[index(x1, y0, z1)];
+    const double c011 = data[index(x0, y1, z1)];
+    const double c111 = data[index(x1, y1, z1)];
+
+    // X
+    const double c00 = c000 * (1.0 - t.x()) + c100 * t.x();
+    const double c10 = c010 * (1.0 - t.x()) + c110 * t.x();
+    const double c01 = c001 * (1.0 - t.x()) + c101 * t.x();
+    const double c11 = c011 * (1.0 - t.x()) + c111 * t.x();
+
+    // Y
+    const double c0 = c00 * (1.0 - t.y()) + c10 * t.y();
+    const double c1 = c01 * (1.0 - t.y()) + c11 * t.y();
+
+    // Z
+    const double value = c0 * (1.0 - t.z()) + c1 * t.z();
+
+    //std::cout << "POSITION " << position << "("<< x0 << "," << y0 << "," << z0 << " and "<< t << ") value " << c000 << std::endl;
+    return value;
 }
 
 // Register in the Factory
@@ -208,4 +367,17 @@ void registerDiscreteGridField(sofa::core::ObjectFactory* factory)
     .add< DiscreteGridField >());
 }
 
+}
+
+namespace sofa::core::objectmodel
+{
+/// Specialization for MemoryBuffer
+template<> bool Data<component::geometry::MemoryBuffer>::read( const std::string&) { return false; }
+template<> void Data<component::geometry::MemoryBuffer>::printValue( std::ostream& ) const {}
+template<> std::string Data<component::geometry::MemoryBuffer>::getValueString() const {
+    std::stringstream tmp;
+    auto& buffer = getValue();
+    tmp << "Grid<" << buffer.resolution.x() << "," << buffer.resolution.y() << "," << buffer.resolution.z() << "> @"<<buffer.data;
+    return tmp.str() ; }
+template<> std::string Data<component::geometry::MemoryBuffer>::getDefaultValueString() const { return ""; }
 }

@@ -34,7 +34,7 @@ void MarchingCube::generateSurfaceMesh(const double isoval, const double mstep, 
                                        const Vec3d& gridmin, const Vec3d& gridmax,
                                        std::function<void(std::vector<Vec3d>&, std::vector<double>&)> getFieldValueAt,
                                        SeqCoord& tmpPoints, SeqTriangles& tmpTriangles)
-{    
+{
     int nx = floor((gridmax.x() - gridmin.x()) * invStep) + 1 ;
     int ny = floor((gridmax.y() - gridmin.y()) * invStep) + 1 ;
     int nz = floor((gridmax.z() - gridmin.z()) * invStep) + 1 ;
@@ -43,7 +43,6 @@ void MarchingCube::generateSurfaceMesh(const double isoval, const double mstep, 
     if( nz < 2 || ny < 2 || nx < 2 )
         return;
 
-    double cx,cy,cz;
     int z,mk;
     const int *tri;
 
@@ -60,8 +59,6 @@ void MarchingCube::generateSurfaceMesh(const double isoval, const double mstep, 
 
     const int dx = 1;
     const int dy = nx;
-
-    z = 0;
 
     auto fillPlane = [getFieldValueAt](std::vector<Vec3d> &positions, std::vector<double>& output,
                            double mstep, double gridmin_y, double gridmin_x, int ny, int nx, float cz,

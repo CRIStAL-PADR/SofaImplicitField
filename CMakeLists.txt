@@ -21,6 +21,7 @@ set(HEADER_FILES
     ${SOFAIMPLICITFIELD_SRC}/deprecated/InterpolatedImplicitSurface.h # This is a backward compatibility file toward DiscreteGridField
 
     ${SOFAIMPLICITFIELD_SRC}/components/engine/FieldToSurfaceMesh.h
+    ${SOFAIMPLICITFIELD_SRC}/components/engine/GridSampler.h
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/BottleField.h
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/DiscreteGridField.h
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/SphericalField.h
@@ -40,6 +41,7 @@ set(SOURCE_FILES
     ${SOFAIMPLICITFIELD_SRC}/deprecated/InterpolatedImplicitSurface.cpp
     
     ${SOFAIMPLICITFIELD_SRC}/components/engine/FieldToSurfaceMesh.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/engine/GridSampler.cpp
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/BottleField.cpp
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/ScalarField.cpp
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/DiscreteGridField.cpp

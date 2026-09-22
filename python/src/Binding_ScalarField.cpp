@@ -210,6 +210,11 @@ void moduleAddScalarField(py::module &m) {
         self->getHessian(pos, result);
         return result;
     });
+
+    /// register the PointSetTopologyModifier binding in the downcasting subsystem
+    PythonFactory::registerType<ScalarField>([](sofa::core::objectmodel::Base* object) {
+        return py::cast(dynamic_cast<ScalarField*>(object));
+    });
 }
 
 }

@@ -18,14 +18,6 @@ class Sphere(ScalarField):
         x,y,z = pos
         return numpy.linalg.norm(self.center.value - numpy.array([x,y,z])) - self.radius.value
 
-    def getValues(self, positions, out_values):
-           """This version of the overrides the getValues so that we fetch the data once"""
-           center = self.center.value
-           radius = self.radius.value
-           for i in range(len(positions)):
-               r = numpy.linalg.norm(center - positions[i]) - radius
-               out_values[i] = r
-
     def getValues(self, positions, results):
         """This version of the overrides the getValues so that we fetch the data once"""
         results[:] = numpy.linalg.norm(positions - self.center.value, axis=1) - self.radius.value
@@ -54,4 +46,20 @@ class RoundedBox(ScalarField):
         outside = numpy.linalg.norm(numpy.maximum(q, 0.0), axis=1)
         inside = numpy.minimum(numpy.max(q, axis=1), 0.0)
         results[:] = outside + inside - r
+        return results
+
+class SpatialField(ScalarField):
+    def __init__(self, *args, **kwargs):
+        ScalarField.__init__(self, *args, **kwargs)
+
+        self.addData("axis", type="int",value=kwargs.get("axis", 0), default=0, help="axis of the spatial field among {0, 1, 2}", group="Geometry")
+
+    def getValue(self, pos):
+        """This version is of very low performance as there are a huge amount of call to the python side"""
+        x,y,z = pos
+        return x 
+
+    def getValues(self, positions, results):
+        """This version of the overrides the getValues so that we fetch the data once"""
+        results[:] = positions[:, self.axis.value]
         return results

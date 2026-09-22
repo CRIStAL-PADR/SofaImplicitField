@@ -14,7 +14,7 @@
 *                                                                             *
 * You should have received a copy of the GNU Lesser General Public License    *
 * along with this program. If not, see <http://www.gnu.org/licenses/>.        *
-*******************************************************************************
+******************************************************************************
 * Authors: The SOFA Team and external contributors (see Authors.txt)          *
 *                                                                             *
 * Contact information: contact@sofa-framework.org                             *
@@ -52,7 +52,8 @@ namespace sofa::component::geometry
 }
 namespace sofaimplicitfield::component::engine
 {
-extern void registerFieldToSurfaceMesh(sofa::core::ObjectFactory* factory);
+    extern void registerFieldToSurfaceMesh(sofa::core::ObjectFactory* factory);
+    extern void registerGridSampler(sofa::core::ObjectFactory* factory);
 }
 
 namespace sofaimplicitfield
@@ -110,6 +111,7 @@ void registerObjects(sofa::core::ObjectFactory* factory)
     sofa::component::container::registerInterpolatedImplicitSurface(factory);
     sofa::component::geometry::registerDiscreteGridField(factory);
     sofaimplicitfield::component::engine::registerFieldToSurfaceMesh(factory);
+    sofaimplicitfield::component::engine::registerGridSampler(factory);
 }
 
 } /// sofaimplicitfield
