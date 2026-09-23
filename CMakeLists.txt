@@ -29,6 +29,7 @@ set(HEADER_FILES
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/StarShapedField.h
     ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.h
     ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.inl
+    ${SOFAIMPLICITFIELD_SRC}/components/mapping/ScalarFieldMapping.h
 )
 
 set(SOURCE_FILES
@@ -48,6 +49,7 @@ set(SOURCE_FILES
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/SphericalField.cpp
     ${SOFAIMPLICITFIELD_SRC}/components/geometry/StarShapedField.cpp
     ${SOFAIMPLICITFIELD_SRC}/components/mapping/ImplicitSurfaceMapping.cpp
+    ${SOFAIMPLICITFIELD_SRC}/components/mapping/ScalarFieldMapping.cpp
 )
 
 set(EXTRA_FILES
