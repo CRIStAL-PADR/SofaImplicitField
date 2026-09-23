@@ -76,11 +76,12 @@ double BottleField::innerLength(Vec3d& Pos)
             m_excentricity*(Pos[2] - m_center[2])*(Pos[2] - m_center[2]));
 }
 
-double BottleField::getValue(Vec3d& Pos, int& domain)
+double BottleField::getValue(const Vec3d& pos_, int& domain)
 {
     SOFA_UNUSED(domain) ;
-    double resultSphereOuter = this->outerLength(Pos) - m_radius ;
-    double resultEllipsoidInner = this->innerLength(Pos) - m_ellipsoidRadius;
+    Vec3d pos = pos_;
+    double resultSphereOuter = this->outerLength(pos) - m_radius ;
+    double resultEllipsoidInner = this->innerLength(pos) - m_ellipsoidRadius;
 
     double result = std::max(resultSphereOuter,-resultEllipsoidInner);
 
@@ -90,24 +91,24 @@ double BottleField::getValue(Vec3d& Pos, int& domain)
     return result;
 }
 
-Vec3d BottleField::getGradient(Vec3d &Pos, int &domain)
+Vec3d BottleField::getGradient(const Vec3d& pos_, int &domain)
 {
     SOFA_UNUSED(domain);
     Vec3d g;
-
-    double LsphereOuter = this->outerLength(Pos)  ;
-    double LEllipsoidInner = this->innerLength(Pos) ;
+    Vec3d pos = pos_;
+    double LsphereOuter = this->outerLength(pos)  ;
+    double LEllipsoidInner = this->innerLength(pos) ;
 
     if (LsphereOuter - m_radius > - (LEllipsoidInner- m_ellipsoidRadius)){
-        g[0] = (Pos[0] - m_center[0])/LsphereOuter;
-        g[1] = (Pos[1] - m_center[1])/LsphereOuter;
-        g[2] = (Pos[2] - m_center[2])/LsphereOuter;
+        g[0] = (pos[0] - m_center[0])/LsphereOuter;
+        g[1] = (pos[1] - m_center[1])/LsphereOuter;
+        g[2] = (pos[2] - m_center[2])/LsphereOuter;
     }
     else
     {
-        g[0] = -m_excentricity*(Pos[0] - m_center[0])/LEllipsoidInner;
-        g[1] = -(Pos[1] - (m_center[1]+m_shift))/LEllipsoidInner;
-        g[2] = -m_excentricity*(Pos[2] - m_center[2])/LEllipsoidInner;
+        g[0] = -m_excentricity*(pos[0] - m_center[0])/LEllipsoidInner;
+        g[1] = -(pos[1] - (m_center[1]+m_shift))/LEllipsoidInner;
+        g[2] = -m_excentricity*(pos[2] - m_center[2])/LEllipsoidInner;
     }
 
 
@@ -121,34 +122,35 @@ Vec3d BottleField::getGradient(Vec3d &Pos, int &domain)
     return g;
 }
 
-void BottleField::getHessian(Vec3d &Pos, Mat3x3& h)
+void BottleField::getHessian(const Vec3d &pos_, Mat3x3& h)
 {
-    double LsphereOuter = this->outerLength(Pos)  ;
-    double LEllipsoidInner = this->innerLength(Pos) ;
+    Vec3d pos = pos_;
+    double LsphereOuter = this->outerLength(pos)  ;
+    double LEllipsoidInner = this->innerLength(pos) ;
 
     if (LsphereOuter - m_radius > - (LEllipsoidInner- m_ellipsoidRadius))
     {
         double LsphereOuterSquare = LsphereOuter*LsphereOuter;
         double LsphereOuterCube = LsphereOuter*LsphereOuter*LsphereOuter;
-        h[0][0] = ( LsphereOuter - (Pos[0] - m_center[0])*(Pos[0] - m_center[0])/LsphereOuter )/LsphereOuterSquare ;
-        h[1][1] = ( LsphereOuter - (Pos[1] - m_center[1])*(Pos[1] - m_center[1])/LsphereOuter )/LsphereOuterSquare ;
-        h[2][2] = ( LsphereOuter - (Pos[2] - m_center[2])*(Pos[2] - m_center[2])/LsphereOuter )/LsphereOuterSquare ;
+        h[0][0] = ( LsphereOuter - (pos[0] - m_center[0])*(pos[0] - m_center[0])/LsphereOuter )/LsphereOuterSquare ;
+        h[1][1] = ( LsphereOuter - (pos[1] - m_center[1])*(pos[1] - m_center[1])/LsphereOuter )/LsphereOuterSquare ;
+        h[2][2] = ( LsphereOuter - (pos[2] - m_center[2])*(pos[2] - m_center[2])/LsphereOuter )/LsphereOuterSquare ;
 
-        h[0][1] = h[1][0] = - (Pos[0] - m_center[0])*(Pos[1] - m_center[1]) / LsphereOuterCube;
-        h[0][2] = h[2][0] = - (Pos[0] - m_center[0])*(Pos[2] - m_center[2]) / LsphereOuterCube;
-        h[1][2] = h[2][1] = - (Pos[2] - m_center[2])*(Pos[1] - m_center[1]) / LsphereOuterCube;
+        h[0][1] = h[1][0] = - (pos[0] - m_center[0])*(pos[1] - m_center[1]) / LsphereOuterCube;
+        h[0][2] = h[2][0] = - (pos[0] - m_center[0])*(pos[2] - m_center[2]) / LsphereOuterCube;
+        h[1][2] = h[2][1] = - (pos[2] - m_center[2])*(pos[1] - m_center[1]) / LsphereOuterCube;
     }
     else
     {
         double LEllipsoidInnerSquare = LEllipsoidInner*LEllipsoidInner;
         double LEllipsoidInnerCube = LEllipsoidInner*LEllipsoidInner*LEllipsoidInner;
-        h[0][0] = -m_excentricity*(LEllipsoidInner - m_excentricity*(Pos[0] - m_center[0])*(Pos[0] - m_center[0])/LEllipsoidInner )/LEllipsoidInnerSquare ;
-        h[1][1] = -(LEllipsoidInner - (Pos[1] - (m_center[1]+m_shift))*(Pos[1] - (m_center[1]+m_shift))/LEllipsoidInner )/LEllipsoidInnerSquare ;
-        h[2][2] = -m_excentricity*(LEllipsoidInner - m_excentricity*(Pos[2] - m_center[2])*(Pos[2] - m_center[2])/LEllipsoidInner )/LEllipsoidInnerSquare ;
+        h[0][0] = -m_excentricity*(LEllipsoidInner - m_excentricity*(pos[0] - m_center[0])*(pos[0] - m_center[0])/LEllipsoidInner )/LEllipsoidInnerSquare ;
+        h[1][1] = -(LEllipsoidInner - (pos[1] - (m_center[1]+m_shift))*(pos[1] - (m_center[1]+m_shift))/LEllipsoidInner )/LEllipsoidInnerSquare ;
+        h[2][2] = -m_excentricity*(LEllipsoidInner - m_excentricity*(pos[2] - m_center[2])*(pos[2] - m_center[2])/LEllipsoidInner )/LEllipsoidInnerSquare ;
 
-        h[0][1] = h[1][0] = m_excentricity*(Pos[0] - m_center[0])*(Pos[1] - (m_center[1]+m_shift)) / LEllipsoidInnerCube;
-        h[0][2] = h[2][0] = m_excentricity*m_excentricity*(Pos[0] - m_center[0])*(Pos[2] - m_center[2]) / LEllipsoidInnerCube;
-        h[1][2] = h[2][1] = m_excentricity*(Pos[2] - m_center[2])*(Pos[1] - (m_center[1]+m_shift)) / LEllipsoidInnerCube;
+        h[0][1] = h[1][0] = m_excentricity*(pos[0] - m_center[0])*(pos[1] - (m_center[1]+m_shift)) / LEllipsoidInnerCube;
+        h[0][2] = h[2][0] = m_excentricity*m_excentricity*(pos[0] - m_center[0])*(pos[2] - m_center[2]) / LEllipsoidInnerCube;
+        h[1][2] = h[2][1] = m_excentricity*(pos[2] - m_center[2])*(pos[1] - (m_center[1]+m_shift)) / LEllipsoidInnerCube;
     }
 
     if (m_inside)

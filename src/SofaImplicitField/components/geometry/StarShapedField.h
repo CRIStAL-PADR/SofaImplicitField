@@ -50,9 +50,9 @@ public:
     void reinit() override ;
 
     /// Inherited from ScalarField.
-    double getValue(Vec3d& Pos, int &domain) override ;
-    Vec3d getGradient(Vec3d &Pos, int& domain) override ;
-    void getHessian(Vec3d &Pos, Mat3x3& h) override;
+    double getValue(const Vec3d& Pos, int &domain) override ;
+    Vec3d getGradient(const Vec3d &Pos, int& domain) override ;
+    void getHessian(const Vec3d &Pos, Mat3x3& h) override;
 
     using ScalarField::getValue ;
     using ScalarField::getGradient ;

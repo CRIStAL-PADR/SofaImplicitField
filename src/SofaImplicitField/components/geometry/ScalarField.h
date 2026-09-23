@@ -38,15 +38,15 @@ namespace sofa::component::geometry
 namespace _scalarfield_
 {
 
-using BaseObject [[deprecated("Use sofa::core::objectmodel::BaseObject instead.")]] = sofa::core::objectmodel::BaseObject;
+using sofa::core::objectmodel::BaseComponent;
 using sofa::type::Vec3d ;
 using sofa::type::Mat3x3 ;
 
 ////////////////// ///////////////
-class SOFA_SOFAIMPLICITFIELD_API ScalarField : public BaseObject
+class SOFA_SOFAIMPLICITFIELD_API ScalarField : public BaseComponent
 {
 public:
-    SOFA_CLASS(ScalarField, BaseObject);
+    SOFA_CLASS(ScalarField, BaseComponent);
 
 public:
     void init() override;
@@ -54,7 +54,7 @@ public:
     /// Compute the gradient using a first order finite-difference scheme.
     /// This is of lower precision compared to analytical gradient computed by derivating
     /// the equations.
-    Vec3d getGradientByFinitDifference(Vec3d& pos, int& domain) ;
+    Vec3d getGradientByFinitDifference(const Vec3d& pos, int& domain) ;
     void getHessianByCentralFiniteDifference(const Vec3d& x, const double dx,
                                              Mat3x3& hessian);
     virtual int getDomain(Vec3d& pos, int domain) {
@@ -63,23 +63,23 @@ public:
         return -1;
     }
 
-    virtual double getValue(Vec3d& pos, int& domain) = 0;
-    inline double getValue(Vec3d& pos) { int domain=-1; return getValue(pos,domain); }
+    virtual double getValue(const Vec3d& pos, int& domain) = 0;
+    inline double getValue(const Vec3d& pos) { int domain=-1; return getValue(pos,domain); }
 
     // Compute the field for a range or input values
     virtual void getValues(const std::vector<Vec3d>& positions, std::vector<double>& results);
 
     /// By default compute the gradient using a first order finite difference approache
     /// If you have analytical derivative don't hesitate to override this function.
-    virtual Vec3d getGradient(Vec3d& pos, int& domain);
-    inline Vec3d getGradient(Vec3d& pos) {int domain=-1; return getGradient(pos,domain); }
-    virtual void getHessian(Vec3d &Pos, Mat3x3& h);
+    virtual Vec3d getGradient(const Vec3d& pos, int& domain);
+    inline Vec3d getGradient(const Vec3d& pos) {int domain=-1; return getGradient(pos,domain); }
+    virtual void getHessian(const Vec3d &Pos, Mat3x3& h);
 
     /// Returns the value and the gradiant by evaluating one after an other.
     /// For some computation it is possible to implement more efficiently the computation
     /// By factoring the computing of the two...if you can do this please override this function.
-    virtual void getValueAndGradient(Vec3d& pos, double &value, Vec3d& grad, int& domain) ;
-    inline void getValueAndGradient(Vec3d& pos, double &value, Vec3d& grad)
+    virtual void getValueAndGradient(const Vec3d& pos, double &value, Vec3d& grad, int& domain) ;
+    inline void getValueAndGradient(const Vec3d& pos, double &value, Vec3d& grad)
     {
       int domain=-1;
       return getValueAndGradient(pos,value,grad,domain);

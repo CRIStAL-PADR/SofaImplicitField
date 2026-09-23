@@ -103,7 +103,7 @@ public:
         return py::str(py::cast(this).get_type().attr("__name__"));
     }
 
-    double getValue(Vec3& pos, int& domain) override
+    double getValue(const Vec3& pos, int& domain) override
     {
         SOFA_UNUSED(domain);
         PythonEnvironment::gil acquire;
@@ -129,7 +129,7 @@ public:
         auto o = override(vector_to_numpy(positions), vector_to_numpy(results));
     }
 
-    Vec3 getGradient(Vec3& pos, int& domain) override
+    Vec3 getGradient(const Vec3& pos, int& domain) override
     {
         SOFA_UNUSED(domain);
         PythonEnvironment::gil acquire;
@@ -137,7 +137,7 @@ public:
         PYBIND11_OVERLOAD(Vec3, ScalarField, getGradient, pos);
     }
 
-    void getHessian(Vec3 &pos, Mat3x3& h) override
+    void getHessian(const Vec3 &pos, Mat3x3& h) override
     {
         /// The implementation is a bit more complex compared to getGradient. This is because we change de signature between the c++ API and the python one.
         PythonEnvironment::gil acquire;

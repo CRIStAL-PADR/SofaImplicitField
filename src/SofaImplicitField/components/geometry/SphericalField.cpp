@@ -47,12 +47,13 @@ void SphericalField::reinit()
     init();
 }
 
-double SphericalField::getValue(Vec3d& Pos, int& domain)
+double SphericalField::getValue(const Vec3d& pos_, int& domain)
 {
     SOFA_UNUSED(domain) ;
-    double result = (Pos[0] - m_center[0])*(Pos[0] - m_center[0]) +
-            (Pos[1] - m_center[1])*(Pos[1] - m_center[1]) +
-            (Pos[2] - m_center[2])*(Pos[2] - m_center[2]) -
+    Vec3d pos = pos_;
+    double result = (pos[0] - m_center[0])*(pos[0] - m_center[0]) +
+            (pos[1] - m_center[1])*(pos[1] - m_center[1]) +
+            (pos[2] - m_center[2])*(pos[2] - m_center[2]) -
             m_radius * m_radius ;
     if(m_inside)
         result = -result;
@@ -60,7 +61,7 @@ double SphericalField::getValue(Vec3d& Pos, int& domain)
     return result;
 }
 
-Vec3d SphericalField::getGradient(Vec3d &Pos, int &domain)
+Vec3d SphericalField::getGradient(const Vec3d &Pos, int &domain)
 {
     SOFA_UNUSED(domain);
     Vec3d g;
@@ -80,7 +81,7 @@ Vec3d SphericalField::getGradient(Vec3d &Pos, int &domain)
     return g;
 }
 
-void SphericalField::getValueAndGradient(Vec3d& Pos, double &value, Vec3d& /*grad*/, int& domain)
+void SphericalField::getValueAndGradient(const Vec3d& Pos, double &value, Vec3d& /*grad*/, int& domain)
 {
     SOFA_UNUSED(domain);
     Vec3d g;

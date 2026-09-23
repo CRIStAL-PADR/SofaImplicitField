@@ -60,7 +60,7 @@ void StarShapedField::reinit()
     init();
 }
 
-double StarShapedField::getValue(Vec3d& Pos, int& domain)
+double StarShapedField::getValue(const Vec3d& Pos, int& domain)
 {
     SOFA_UNUSED(domain) ;
     double length = sqrt((Pos[0] - m_center[0])*(Pos[0] - m_center[0]) +
@@ -79,7 +79,7 @@ double StarShapedField::getValue(Vec3d& Pos, int& domain)
     return result;
 }
 
-Vec3d StarShapedField::getGradient(Vec3d &Pos, int &domain)
+Vec3d StarShapedField::getGradient(const Vec3d &Pos, int &domain)
 {
     SOFA_UNUSED(domain);
     Vec3d g;
@@ -105,7 +105,7 @@ Vec3d StarShapedField::getGradient(Vec3d &Pos, int &domain)
     return g;
 }
 
-void StarShapedField::getHessian(Vec3d &Pos, Mat3x3& h)
+void StarShapedField::getHessian(const Vec3d &Pos, Mat3x3& h)
 {
     double length = sqrt((Pos[0] - m_center[0])*(Pos[0] - m_center[0]) +
             (Pos[1] - m_center[1])*(Pos[1] - m_center[1]) +

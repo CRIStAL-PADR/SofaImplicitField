@@ -62,7 +62,7 @@ public:
     void init() override;
     void draw(const sofa::core::visual::VisualParams*) override;
 
-    double getValue(Vec3d& position, int& domain) override;
+    double getValue(const Vec3d& position, int& domain) override;
     void getValues(const std::vector<Vec3d>& positions, std::vector<double>& results) override;
 
     bool loadGridFromMHD( const char *filename ) ;

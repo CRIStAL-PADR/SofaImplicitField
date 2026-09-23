@@ -46,9 +46,10 @@ void ScalarField::init()
     d_componentState.setValue(core::objectmodel::ComponentState::Valid);
 }
 
-Vec3d ScalarField::getGradientByFinitDifference(Vec3d& pos, int& i)
+Vec3d ScalarField::getGradientByFinitDifference(const Vec3d& pos_, int& i)
 {
     Vec3d Result;
+    Vec3d pos = pos_;
     double epsilon = d_epsilon.getValue();
     pos[0] += epsilon;
     Result[0] = getValue(pos, i);
@@ -78,12 +79,12 @@ void ScalarField::getValues(const std::vector<Vec3d>& positions, std::vector<dou
     }
 }
 
-Vec3d ScalarField::getGradient(Vec3d& pos, int& i)
+Vec3d ScalarField::getGradient(const Vec3d& pos, int& i)
 {
     return getGradientByFinitDifference(pos, i);
 }
 
-void ScalarField::getValueAndGradient(Vec3d& pos, double &value, Vec3d& grad, int& domain)
+void ScalarField::getValueAndGradient(const Vec3d& pos, double &value, Vec3d& grad, int& domain)
 {
   value = getValue(pos,domain);
   grad = getGradient(pos,domain);
@@ -121,7 +122,7 @@ void ScalarField::getHessianByCentralFiniteDifference(const Vec3d& x, const doub
 }
 
 
-void ScalarField::getHessian(Vec3d &Pos, Mat3x3& h)
+void ScalarField::getHessian(const Vec3d &Pos, Mat3x3& h)
 {
     getHessianByCentralFiniteDifference(Pos, d_epsilon.getValue(), h);
 }

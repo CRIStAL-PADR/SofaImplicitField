@@ -59,7 +59,7 @@ DiscreteGridField::DiscreteGridField()
 
     addUpdateCallback("updateFromData",{&d_buffer},[this](const sofa::core::DataTracker&){
 
-        /// Update the internal buffers when d_resolution change
+        /// Update the internal buffers when d_buffer change
         std::cout << "WE ARE GOING TO UPDATE FROM DATA BUFFER: " << d_buffer.getCounter() << std::endl;
 
         /// Update the internal state
@@ -248,7 +248,6 @@ void DiscreteGridField::getValues(const std::vector<Vec3d>& positions, std::vect
     const auto& resolution = buffer->resolution;
     const auto& min = buffer->min;
     const auto& scaling = buffer->scaling;
-    const auto& spacing = buffer->spacing;
     const auto& data = buffer->data;
 
     auto getValue = [&min, &scaling, &resolution, &data](const Vec3d position){
@@ -302,7 +301,7 @@ void DiscreteGridField::getValues(const std::vector<Vec3d>& positions, std::vect
 
 }
 
-double DiscreteGridField::getValue(Vec3d &position, int &)
+double DiscreteGridField::getValue(const Vec3d& position, int &)
 {
     auto buffer = sofa::helper::getReadAccessor(d_buffer);
     if(buffer->data==nullptr)
@@ -356,7 +355,6 @@ double DiscreteGridField::getValue(Vec3d &position, int &)
     // Z
     const double value = c0 * (1.0 - t.z()) + c1 * t.z();
 
-    //std::cout << "POSITION " << position << "("<< x0 << "," << y0 << "," << z0 << " and "<< t << ") value " << c000 << std::endl;
     return value;
 }
 

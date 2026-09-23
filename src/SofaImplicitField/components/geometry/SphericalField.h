@@ -52,9 +52,9 @@ public:
     void reinit() override ;
 
     /// Inherited from ScalarField.
-    double getValue(Vec3d& Pos, int &domain) override ;
-    Vec3d getGradient(Vec3d &Pos, int& domain) override ;
-    void getValueAndGradient(Vec3d& pos, double& val, Vec3d& grad, int& domain) override ;
+    double getValue(const Vec3d& Pos, int &domain) override ;
+    Vec3d getGradient(const Vec3d &Pos, int& domain) override ;
+    void getValueAndGradient(const Vec3d& pos, double& val, Vec3d& grad, int& domain) override ;
 
     using ScalarField::getValue ;
     using ScalarField::getGradient ;
