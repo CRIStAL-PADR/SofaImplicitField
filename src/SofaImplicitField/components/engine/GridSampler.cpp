@@ -67,13 +67,6 @@ void GridSampler::init()
     d_componentState = core::objectmodel::ComponentState::Valid;
 }
 
-void GridSampler::notifyLinkSet(BaseLink* link, Base* base)
-{
-    if(link==&l_field){
-        std::cout << "THE FIELD HAS HCNAGD" << std::endl;
-    }
-}
-
 void GridSampler::updateInternalBuffer(const Vec3u& resolution, const Vec3d& min, const Vec3d& max)
 {
     auto buffer = sofa::helper::getWriteOnlyAccessor(d_buffer);
