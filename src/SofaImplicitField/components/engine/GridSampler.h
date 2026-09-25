@@ -52,8 +52,6 @@ public:
 
     Data<sofa::component::geometry::MemoryBuffer> d_buffer;
 
-    void notifyLinkSet(BaseLink*, Base*) override;
-
 protected:
     SingleLink<GridSampler, ScalarField,
                BaseLink::FLAG_STOREPATH|BaseLink::FLAG_STRONGLINK> l_field;

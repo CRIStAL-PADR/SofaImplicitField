@@ -39,5 +39,5 @@ def createScene(root):
     model.state.showObject = True
     model.state.showObjectScale = 5.0
 
-    model.Child.addObject("StopperLagrangianConstraint", name="constraint", min=0.0, max=1.0, index=1)
+    model.Child.addObject("StopperLagrangianConstraint", name="constraint", min=0.0, max=1.0, index=3)
     model.Child.addObject("GenericConstraintCorrection", name="correction", linearSolver=root.linearSolver.linkpath, ODESolver=root.odesolver.linkpath)

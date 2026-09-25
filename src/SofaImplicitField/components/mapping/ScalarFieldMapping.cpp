@@ -110,15 +110,19 @@ void ScalarFieldMapping::applyJT( const ConstraintParams* mparams, InDataMatrixD
     if(!isComponentStateValid())
         return;
     auto x = fromModel->readPositions();
+    auto y = toModel->readPositions();
     auto dx = sofa::helper::getWriteOnlyAccessor(dx_);
     auto dy = sofa::helper::getReadAccessor(dy_);
     auto field = l_field.get();
 
-    for (Size i = 0; i < dx.size(); ++i)
-    {
-        const Vec3d grad = field->getGradient(x[i]);
-        dx[i] += grad * dy[i].x();                           //< Because dy is in R so there is only one value
-    }
+    std::cout << "Constraint InDataMatrixDeriv:" << dx_ << std::endl;
+    std::cout << "Constraint OutDataMatrixDeriv:" << dy_ << std::endl;
+
+    // for (Size i = 0; i < dx.size(); ++i)
+    // {
+    //     const Vec3d grad = field->getGradient(x[i]);
+    //     dx[i] += grad * dy[i].x();                           //< Because dy is in R so there is only one value
+    // }
 }
 
 
